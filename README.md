@@ -117,5 +117,6 @@ docs/
 notebook/
   eer_diagram.png  Sơ đồ EER (ký hiệu Elmasri)
   physical_erd.png Sơ đồ vật lý Crow's Foot (kèm .svg và mã nguồn .mmd)
+report/            Báo cáo Word theo mẫu môn học
 Requirement/       Tài liệu yêu cầu của môn học
 ```

@@ -34,7 +34,7 @@ Mini-Netflix cho người dùng đăng ký gói dịch vụ trả phí để xem
 |---|---|
 | Lược đồ dữ liệu, ràng buộc, trigger, view, chỉ mục, phân quyền | Lưu trữ và truyền phát tệp video (chỉ lưu đường dẫn `video_url`) |
 | Dữ liệu mẫu tiếng Việt và truy vấn báo cáo | Kết nối cổng thanh toán thật (chỉ ghi nhận kết quả giao dịch) |
-| Ứng dụng demo đơn giản kết nối CSDL (giai đoạn 4) | Gợi ý phim tự động, phụ đề đa ngôn ngữ, quản lý thiết bị đăng nhập |
+| Kiểm thử ràng buộc, phân quyền và hiệu năng | Gợi ý phim tự động, phụ đề đa ngôn ngữ, quản lý thiết bị đăng nhập |
 
 ## 1.2. Các quy tắc và Ràng buộc Nghiệp vụ (Business Rules & Constraints)
 
@@ -91,13 +91,13 @@ Các thao tác hướng dữ liệu mà hệ thống phải cung cấp. Cột cu
 |---|---|---|---|---|
 | NFR-01 | Hiệu năng | Tìm tác phẩm theo từ khóa trả kết quả dưới 200 ms với 50 000 tác phẩm. | Chỉ mục GIN `pg_trgm`; đo được 0,5–4,2 ms (`SQL/tests/performance_tests.sql`, P1) | Đạt |
 | NFR-02 | Hiệu năng | Lấy 20 lượt xem gần nhất của một hồ sơ dưới 50 ms với 420 000 lượt xem. | Chỉ mục `watch_history_recent_idx`; đo được dưới 0,1 ms (P3) | Đạt |
-| NFR-03 | Toàn vẹn | Mọi quy tắc nghiệp vụ ở mục 1.2.5 được bắt buộc trong CSDL, kể cả khi dữ liệu được ghi trực tiếp không qua ứng dụng. | Ràng buộc và trigger; 32 ca kiểm thử (`SQL/tests/constraint_tests.sql`) | Đạt |
+| NFR-03 | Toàn vẹn | Các quy tắc nghiệp vụ ở mục 1.2.5 được bắt buộc trong CSDL tại thời điểm ghi, kể cả khi dữ liệu được ghi trực tiếp không qua ứng dụng. Ngoại lệ: BR-24 là giá trị tính trong view. | Ràng buộc và trigger; 40 ca kiểm thử (`SQL/tests/constraint_tests.sql`) | Đạt |
 | NFR-04 | Bảo mật | Không lưu mật khẩu gốc. | Cột `password_hash`; dữ liệu mẫu băm bằng bcrypt (`crypt`, `gen_salt('bf')`) | Đạt với dữ liệu mẫu; ứng dụng phải băm khi đăng ký |
 | NFR-05 | Bảo mật | Mỗi vai trò chỉ có quyền tối thiểu. Ứng dụng không xóa được thanh toán, lịch sử xem; không tự nâng quyền tài khoản. | `SQL/08_roles.sql`; 28 ca kiểm thử (`SQL/tests/rbac_tests.sql`) | Đạt |
 | NFR-06 | Bảo mật | Phân tích viên không đọc được email và mã băm mật khẩu. | Phân quyền theo cột trên `users` | Đạt |
 | NFR-07 | Bảo mật | Dữ liệu được mã hóa khi lưu trữ (encryption at rest). | PostgreSQL bản cộng đồng không có sẵn; cần mã hóa ở mức ổ đĩa (ví dụ BitLocker) khi triển khai | Ngoài phạm vi cài đặt |
 | NFR-08 | Sẵn sàng | Có thể khôi phục dữ liệu khi sự cố, mất tối đa dữ liệu của 1 ngày. | Sao lưu hằng ngày bằng `pg_dump` khi triển khai | Chưa cài đặt, chưa kiểm chứng |
-| NFR-09 | Bảo trì | Script SQL theo một chuẩn trình bày công khai và chạy lại được từ đầu theo thứ tự đánh số. | SQLStyle.guide; `SQL/01`–`09` | Đạt |
+| NFR-09 | Bảo trì | Script SQL theo một chuẩn trình bày công khai và chạy lại được từ đầu theo thứ tự đánh số. | SQLStyle.guide [4]; `SQL/01`–`09` | Đạt |
 | NFR-10 | Bản địa hóa | Lưu và hiển thị đúng tiếng Việt có dấu. | Mã hóa UTF-8; dữ liệu mẫu tiếng Việt | Đạt |
 
 ### 1.2.5. Danh sách quy tắc nghiệp vụ
@@ -137,9 +137,11 @@ Các thao tác hướng dữ liệu mà hệ thống phải cung cấp. Cột cu
 
 **Về cột "Kiểm thử":**
 - `Có` nghĩa là quy tắc có ít nhất một ca trong `SQL/tests/constraint_tests.sql` chứng minh dữ liệu vi phạm bị chặn.
-- `—` là các quy tắc mang tính cấu trúc, được đảm bảo bởi cách tổ chức bảng và khóa, nên không có ca kiểm thử riêng.
+- Dấu gạch (—) là các quy tắc không có ca chặn riêng, phần lớn mang tính cấu trúc, được đảm bảo bởi cách tổ chức bảng và khóa, nên không có ca kiểm thử riêng.
 
-**Ngưỡng do nhóm tự đặt:** đề bài không quy định các ngưỡng dưới đây, nên nhóm cần chốt trước khi nộp:
+**Giới hạn của trigger:** trigger kiểm tra tại thời điểm ghi dữ liệu chính. Hệ thống không kiểm tra lại dữ liệu cũ khi tài khoản chuyển sang gói ít hồ sơ hơn, khi hồ sơ được đổi sang hồ sơ trẻ em, khi độ tuổi xem tăng, hoặc khi thời lượng video giảm. Dữ liệu đã ghi trước đó được giữ nguyên như lịch sử.
+
+**Ngưỡng do nhóm quy định:** đề bài không nêu các ngưỡng dưới đây, nhóm chọn như sau:
 - Độ tuổi 12 cho hồ sơ trẻ em (BR-22).
 - Mức 90% để tính là xem hết (BR-24).
 - Khoảng ngày hiệu lực không tính ngày kết thúc (BR-07).

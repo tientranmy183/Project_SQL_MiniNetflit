@@ -12,6 +12,7 @@ Cơ sở dữ liệu được cài đặt trên PostgreSQL 18. Các script trong
 | [06_seed_sample_data.sql](../SQL/06_seed_sample_data.sql) | Dữ liệu mẫu tiếng Việt |
 | [07_queries.sql](../SQL/07_queries.sql) | 14 truy vấn nâng cao (chỉ đọc) |
 | [08_roles.sql](../SQL/08_roles.sql) | Phân quyền theo vai trò (mục 5.2) |
+| [09_seed_more_data.sql](../SQL/09_seed_more_data.sql) | Thêm 3 679 dòng dữ liệu mẫu tiếng Việt |
 
 ## 4.1. Các đối tượng đã cài đặt
 
@@ -65,24 +66,24 @@ Các trigger kiểm tra phân cấp và năm phát hành là constraint trigger 
 
 ### Truy vấn nâng cao
 
-[SQL/07_queries.sql](../SQL/07_queries.sql) có 14 truy vấn, mỗi truy vấn trả lời một câu hỏi nghiệp vụ. Cột "Số dòng" là kết quả khi chạy trên dữ liệu mẫu của `05` và `06` (chưa có `09`) ngày 13/11/2026. Dữ liệu mẫu tính ngày theo `CURRENT_DATE`, nên số dòng có thể khác khi chạy vào ngày khác.
+[SQL/07_queries.sql](../SQL/07_queries.sql) có 14 truy vấn, mỗi truy vấn trả lời một câu hỏi nghiệp vụ. Cột "Số dòng" là kết quả khi chạy trên toàn bộ dữ liệu mẫu (`05`, `06`, `09`) ngày 24/11/2026. Dữ liệu mẫu tính ngày theo `CURRENT_DATE`, nên số dòng có thể khác khi chạy vào ngày khác.
 
 | # | Câu hỏi nghiệp vụ | Kỹ thuật | Số dòng |
 |---|---|---|---|
 | Q01 | 10 tác phẩm có nhiều người xem nhất 30 ngày qua | JOIN nhiều bảng qua hai lớp con, `COUNT(DISTINCT)`, `GROUP BY` | 10 |
-| Q02 | Doanh thu thuần theo tháng và gói | `SUM(CASE ...)`, `FILTER`, `date_trunc` | 18 |
+| Q02 | Doanh thu thuần theo tháng và gói | `SUM(CASE ...)`, `FILTER`, `date_trunc` | 25 |
 | Q03 | Người đang trả phí nhưng 14 ngày chưa xem gì | `NOT EXISTS` trên view | 14 |
-| Q04 | "Tiếp tục xem" của từng hồ sơ | CTE, `ROW_NUMBER() OVER` | 25 |
-| Q05 | Tập tiếp theo cần xem của từng phim bộ đang xem | Subquery tương quan, so sánh bộ giá trị, `LEFT JOIN` | 55 |
-| Q06 | Thể loại yêu thích của từng hồ sơ | Hai CTE, `RANK() OVER` trên kết quả gộp | 76 |
-| Q07 | Tỷ lệ xem hết theo tác phẩm (từ 5 lượt) | `HAVING`, `FILTER` | 15 |
+| Q04 | "Tiếp tục xem" của từng hồ sơ | CTE, `ROW_NUMBER() OVER` | 141 |
+| Q05 | Tập tiếp theo cần xem của từng phim bộ đang xem | Subquery tương quan, so sánh bộ giá trị, `LEFT JOIN` | 389 |
+| Q06 | Thể loại yêu thích của từng hồ sơ | Hai CTE, `RANK() OVER` trên kết quả gộp | 209 |
+| Q07 | Tỷ lệ xem hết theo tác phẩm (từ 5 lượt) | `HAVING`, `FILTER` | 50 |
 | Q08 | Mức dùng hồ sơ theo gói | Bảng dẫn xuất, `AVG` trên số đếm | 3 |
-| Q09 | Diễn viên tham gia nhiều tác phẩm nhất | Subquery vô hướng trong `SUM`, `HAVING` với subquery | 6 |
-| Q10 | Người đổi gói khi gia hạn: nâng hay hạ cấp | `LAG() OVER`, mệnh đề `WINDOW`, `CASE` | 5 |
+| Q09 | Diễn viên tham gia nhiều tác phẩm nhất | Subquery vô hướng trong `SUM`, `HAVING` với subquery | 3 |
+| Q10 | Người đổi gói khi gia hạn: nâng hay hạ cấp | `LAG() OVER`, mệnh đề `WINDOW`, `CASE` | 24 |
 | Q11 | Tác phẩm đã lưu nhưng chưa từng xem | `NOT EXISTS` qua hai lớp con | 20 |
-| Q12 | Gói sắp hết hạn trong 30 ngày, kèm email | `BETWEEN`, subquery `IN` | 8 |
+| Q12 | Gói sắp hết hạn trong 30 ngày, kèm email | `BETWEEN`, subquery `IN` | 28 |
 | Q13 | Lượt xem theo khung giờ, tách trẻ em và người lớn | `CASE` trên `EXTRACT(HOUR)`, `FILTER` | 4 |
-| Q14 | Tiến độ xem phim bộ từ 30% trở lên | `COUNT(DISTINCT)`, bảng dẫn xuất, `HAVING` theo ngưỡng tính toán | 9 |
+| Q14 | Tiến độ xem phim bộ từ 30% trở lên | `COUNT(DISTINCT)`, bảng dẫn xuất, `HAVING` theo ngưỡng tính toán | 190 |
 
 ### Kiểm tra hiệu năng
 

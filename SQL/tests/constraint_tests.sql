@@ -197,4 +197,29 @@ SELECT pg_temp.expect('delete a content that has viewing history',
 SELECT pg_temp.expect('delete a user who has subscriptions',
        $q$DELETE FROM users WHERE user_id = 'T000001'$q$, TRUE);
 
+/* ---------- Rules added for full business-rule coverage ---------- */
+
+INSERT INTO payments (subscription_id, amount, payment_method, payment_status)
+SELECT subscription_id, 50000, 'VNPay', 'SUCCESS'
+  FROM subscriptions
+ WHERE user_id = 'T000001';
+
+SELECT pg_temp.expect('duplicate plan name',
+       $q$INSERT INTO plans (plan_name, monthly_price, max_profiles, video_quality) VALUES ('TEST 2 hồ sơ', 1, 1, 'HD')$q$, TRUE);
+SELECT pg_temp.expect('plan allowing zero profiles',
+       $q$INSERT INTO plans (plan_name, monthly_price, max_profiles, video_quality) VALUES ('Bad', 1, 0, 'HD')$q$, TRUE);
+SELECT pg_temp.expect('unknown subscription status',
+       $q$UPDATE subscriptions SET subscription_status = 'PAUSED' WHERE user_id = 'T000001'$q$, TRUE);
+SELECT pg_temp.expect('delete a plan that is in use',
+       $q$DELETE FROM plans WHERE plan_id = (SELECT plan_id FROM fx)$q$, TRUE);
+SELECT pg_temp.expect('delete a subscription that has payments',
+       $q$DELETE FROM subscriptions WHERE user_id = 'T000001'$q$, TRUE);
+SELECT pg_temp.expect('release year before cinema existed',
+       $q$UPDATE titles SET release_year = 1800 WHERE title_id = (SELECT series_title FROM fx)$q$, TRUE);
+SELECT pg_temp.expect('negative age rating',
+       $q$UPDATE titles SET age_rating = -1 WHERE title_id = (SELECT series_title FROM fx)$q$, TRUE);
+SELECT pg_temp.expect('second movie row for one title',
+       $q$WITH c AS (INSERT INTO contents (content_type, duration_seconds, video_url) VALUES ('MV', 10, 'second') RETURNING content_id)
+          INSERT INTO movies (content_id, title_id) SELECT c.content_id, fx.movie_title FROM c, fx$q$, TRUE);
+
 ROLLBACK;

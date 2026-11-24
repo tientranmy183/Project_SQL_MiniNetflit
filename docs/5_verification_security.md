@@ -12,7 +12,7 @@
 
 Mỗi dòng kết quả ghi `PASS` khi kết quả khớp kỳ vọng, kèm mã lỗi PostgreSQL.
 
-**Kết quả:** 32/32 ca `PASS`, chạy ngày 13/11/2026.
+**Kết quả:** 40/40 ca `PASS`, chạy ngày 24/11/2026.
 
 | Nhóm | Ca kiểm tra | Kỳ vọng | Bị chặn bởi |
 |---|---|---|---|
@@ -46,8 +46,16 @@ Mỗi dòng kết quả ghi `PASS` khi kết quả khớp kỳ vọng, kèm mã 
 | | Hồ sơ trẻ em xem phim 18+ | Chặn | Trigger `watch_history_enforce_access` |
 | | Hồ sơ người lớn xem phim 18+ | Cho phép | |
 | | Xem ngoài thời hạn gói | Chặn | Trigger `watch_history_enforce_access` |
+| Gói dịch vụ | Trùng tên gói | Chặn | `UNIQUE plans_plan_name_key` |
+| | Gói cho 0 hồ sơ | Chặn | `CHECK max_profiles_positive` |
+| | Trạng thái đăng ký lạ (`PAUSED`) | Chặn | `CHECK subscription_status_value` |
+| Danh mục | Năm phát hành trước 1888 | Chặn | `CHECK title_release_year_range` |
+| | Độ tuổi xem âm | Chặn | `CHECK age_rating_not_negative` |
+| | Hai phim lẻ cho một tác phẩm | Chặn | `UNIQUE movies_title_id_key` |
 | Xóa dữ liệu | Xóa nội dung đã có lịch sử xem | Chặn | Khóa ngoại `RESTRICT` |
 | | Xóa tài khoản đã có đăng ký | Chặn | Khóa ngoại `RESTRICT` |
+| | Xóa gói đang được dùng | Chặn | Khóa ngoại `RESTRICT` |
+| | Xóa đăng ký đã có thanh toán | Chặn | Khóa ngoại `RESTRICT` |
 
 Mỗi ca bị chặn đều do đúng ràng buộc cần kiểm tra, được xác nhận qua tên ràng buộc trong thông báo lỗi. Ví dụ, ca trùng tên hồ sơ được thiết kế để không vướng giới hạn số hồ sơ trước.
 
@@ -111,7 +119,7 @@ GRANT SELECT (user_id, username, gender, account_type_code, created_at) ON users
 
 [SQL/tests/rbac_tests.sql](../SQL/tests/rbac_tests.sql) chuyển sang từng vai trò (`SET LOCAL ROLE`), thử thao tác, rồi hoàn tác. Script được chạy sau `08_roles.sql`.
 
-**Kết quả:** 28/28 ca `PASS`, chạy ngày 13/11/2026.
+**Kết quả:** 28/28 ca `PASS`, chạy ngày 24/11/2026.
 
 | Vai trò | Được phép (đã kiểm tra) | Bị từ chối (đã kiểm tra) |
 |---|---|---|
